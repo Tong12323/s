@@ -39,7 +39,11 @@
       cursor: none;
       overflow-x: hidden;
     }
+  </style>
+</head>
+<body>
 
+  <script>
     /* Nav scroll state */
     const nav = document.getElementById('nav');
     let lastScrollY = window.scrollY;
@@ -49,12 +53,14 @@
       const scrollingDown = currentScrollY > lastScrollY;
       const scrollingUp = currentScrollY < lastScrollY;
 
-      nav.classList.toggle('scrolled', currentScrollY > 60);
+      if (nav) {
+        nav.classList.toggle('scrolled', currentScrollY > 60);
 
-      if (scrollingDown && currentScrollY > 4) {
-        nav.classList.add('is-hidden');
-      } else if (scrollingUp || currentScrollY <= 4) {
-        nav.classList.remove('is-hidden');
+        if (scrollingDown && currentScrollY > 4) {
+          nav.classList.add('is-hidden');
+        } else if (scrollingUp || currentScrollY <= 4) {
+          nav.classList.remove('is-hidden');
+        }
       }
 
       lastScrollY = currentScrollY;
@@ -69,15 +75,14 @@
       .to('.hero-eyebrow',    { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.1)
       .to('.hero-heading',    { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' }, 0.25)
       .to('.hero-desc',       { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.6)
-      .to('.hero-scroll-hint',{ opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.75)
-      .to('.hero-scroll-hint', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.75);
+      .to('.hero-scroll-hint',{ opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.75);
 
     /* ── Hero blob interactions ─────────────────────────── */
     const heroBlobWrap  = document.getElementById('heroBlobWrap');
     const heroBlobGroup = document.getElementById('heroBlobGroup');
     const heroBlobMain  = document.querySelector('.hero-blob-main');
 
-    /* Centering + initial state — GSAP owns transform, no CSS conflict */
+    /* Centering + initial state */
     gsap.set(heroBlobWrap, { yPercent: -55, autoAlpha: 0, scale: 0.82 });
 
     /* Entrance */
@@ -91,25 +96,29 @@
     }
 
     /* Breathing scale */
-    gsap.to(heroBlobGroup, {
-      scale: 1.05, duration: 8, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
-    });
+    if (heroBlobGroup) {
+      gsap.to(heroBlobGroup, {
+        scale: 1.05, duration: 8, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
+      });
 
-    /* Slow rotation */
-    gsap.to(heroBlobGroup, {
-      rotation: 6, duration: 13, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
-    });
+      /* Slow rotation */
+      gsap.to(heroBlobGroup, {
+        rotation: 6, duration: 13, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
+      });
+    }
 
-    /* Mouse parallax — x/y don't conflict with yPercent centering */
+    /* Mouse parallax */
     document.addEventListener('mousemove', e => {
       if (!heroBlobWrap) return;
       const xPct = e.clientX / innerWidth  - 0.5;
       const yPct = e.clientY / innerHeight - 0.5;
       gsap.to(heroBlobWrap, { x: xPct * -65, y: yPct * -45, duration: 2.2, ease: 'power3.out', overwrite: 'auto' });
-      gsap.to(heroBlobGroup, { rotationY: xPct * 12, rotationX: yPct * -8, duration: 1.8, ease: 'power2.out', overwrite: 'auto', svgOrigin: '200 280' });
+      if (heroBlobGroup) {
+        gsap.to(heroBlobGroup, { rotationY: xPct * 12, rotationX: yPct * -8, duration: 1.8, ease: 'power2.out', overwrite: 'auto', svgOrigin: '200 280' });
+      }
     });
 
-    /* Scroll fade — onUpdate avoids tween conflicts entirely */
+    /* Scroll fade */
     ScrollTrigger.create({
       trigger: '#hero',
       start: 'top top',
@@ -126,7 +135,7 @@
 
     /* Generic sr */
     gsap.utils.toArray('.sr').forEach(el => {
-      if (el.closest('#hero')) return; /* hero handled above */
+      if (el.closest('#hero')) return; 
       gsap.to(el, {
         scrollTrigger: { trigger: el, start: 'top 86%', once: true },
         opacity: 1, y: 0, duration: 0.85, ease: 'power3.out'
@@ -142,16 +151,20 @@
     });
 
     /* Project cards */
-    gsap.from('.project-card', {
-      scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
-      opacity: 0, y: 50, stagger: 0.13, duration: 0.85, ease: 'power3.out'
-    });
+    if (document.querySelector('.projects-grid')) {
+      gsap.from('.project-card', {
+        scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
+        opacity: 0, y: 50, stagger: 0.13, duration: 0.85, ease: 'power3.out'
+      });
+    }
 
     /* Service rows */
-    gsap.from('.svc-row', {
-      scrollTrigger: { trigger: '.services-list', start: 'top 82%', once: true },
-      opacity: 0, x: -28, stagger: 0.08, duration: 0.65, ease: 'power3.out'
-    });
+    if (document.querySelector('.services-list')) {
+      gsap.from('.svc-row', {
+        scrollTrigger: { trigger: '.services-list', start: 'top 82%', once: true },
+        opacity: 0, x: -28, stagger: 0.08, duration: 0.65, ease: 'power3.out'
+      });
+    }
 
     /* Stat counters */
     document.querySelectorAll('[data-count]').forEach(el => {
