@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Micronen — Digital Design Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,700;0,800;0,900;1,300&family=Syne:wght@400;500;600;700;800&family=Inter:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #F9F8F6;
+      --fg:       #0C0C0C;
+      --muted:    #7C7C7C;
+      --border:   #E2DED9;
+      --surface:  #F2EFEA;
+      --bg-inv:   #0C0C0C;
+      --fg-inv:   #F9F8F6;
+
+      --font-display: 'Syne', sans-serif;
+      --font-hero:    'Inter Tight', 'Inter', sans-serif;
+      --font-body:    'Inter', sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      cursor: none;
+      overflow-x: hidden;
+    }
+
+    /* Nav scroll state */
+    const nav = document.getElementById('nav');
+    let lastScrollY = window.scrollY;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = Math.max(window.scrollY, 0);
+      const scrollingDown = currentScrollY > lastScrollY;
+      const scrollingUp = currentScrollY < lastScrollY;
+
+      nav.classList.toggle('scrolled', currentScrollY > 60);
+
+      if (scrollingDown && currentScrollY > 4) {
+        nav.classList.add('is-hidden');
+      } else if (scrollingUp || currentScrollY <= 4) {
+        nav.classList.remove('is-hidden');
+      }
+
+      lastScrollY = currentScrollY;
+    }, { passive: true });
+
+    /* ── GSAP Scroll Animations ─────────────────────────── */
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* Hero entrance */
+    const heroTl = gsap.timeline({ delay: 0.2 });
+    heroTl
+      .to('.hero-eyebrow',    { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.1)
+      .to('.hero-heading',    { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' }, 0.25)
+      .to('.hero-desc',       { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.6)
+      .to('.hero-scroll-hint',{ opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.75)
+      .to('.hero-scroll-hint', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 0.75);
+
+    /* ── Hero blob interactions ─────────────────────────── */
+    const heroBlobWrap  = document.getElementById('heroBlobWrap');
+    const heroBlobGroup = document.getElementById('heroBlobGroup');
+    const heroBlobMain  = document.querySelector('.hero-blob-main');
+
+    /* Centering + initial state — GSAP owns transform, no CSS conflict */
+    gsap.set(heroBlobWrap, { yPercent: -55, autoAlpha: 0, scale: 0.82 });
+
+    /* Entrance */
+    gsap.to(heroBlobWrap, { autoAlpha: 1, scale: 1, duration: 2, ease: 'power3.out', delay: 0.35 });
+
+    /* Stroke draw-in */
+    if (heroBlobMain) {
+      const len = heroBlobMain.getTotalLength();
+      gsap.set(heroBlobMain, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.to(heroBlobMain, { strokeDashoffset: 0, duration: 3.2, ease: 'power2.inOut', delay: 0.4 });
+    }
+
+    /* Breathing scale */
+    gsap.to(heroBlobGroup, {
+      scale: 1.05, duration: 8, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
+    });
+
+    /* Slow rotation */
+    gsap.to(heroBlobGroup, {
+      rotation: 6, duration: 13, ease: 'sine.inOut', yoyo: true, repeat: -1, svgOrigin: '200 280'
+    });
+
+    /* Mouse parallax — x/y don't conflict with yPercent centering */
+    document.addEventListener('mousemove', e => {
+      if (!heroBlobWrap) return;
+      const xPct = e.clientX / innerWidth  - 0.5;
+      const yPct = e.clientY / innerHeight - 0.5;
+      gsap.to(heroBlobWrap, { x: xPct * -65, y: yPct * -45, duration: 2.2, ease: 'power3.out', overwrite: 'auto' });
+      gsap.to(heroBlobGroup, { rotationY: xPct * 12, rotationX: yPct * -8, duration: 1.8, ease: 'power2.out', overwrite: 'auto', svgOrigin: '200 280' });
+    });
+
+    /* Scroll fade — onUpdate avoids tween conflicts entirely */
+    ScrollTrigger.create({
+      trigger: '#hero',
+      start: 'top top',
+      end: '70% top',
+      onUpdate: self => { if (heroBlobWrap) gsap.set(heroBlobWrap, { autoAlpha: 1 - self.progress }); }
+    });
+
+    /* Remove initial sr state so GSAP controls */
+    document.querySelectorAll('.sr, .sr-fade, .sr-left').forEach(el => {
+      el.style.opacity = '0';
+      if (el.classList.contains('sr'))      el.style.transform = 'translateY(32px)';
+      if (el.classList.contains('sr-left')) el.style.transform = 'translateX(-24px)';
+    });
+
+    /* Generic sr */
+    gsap.utils.toArray('.sr').forEach(el => {
+      if (el.closest('#hero')) return; /* hero handled above */
+      gsap.to(el, {
+        scrollTrigger: { trigger: el, start: 'top 86%', once: true },
+        opacity: 1, y: 0, duration: 0.85, ease: 'power3.out'
+      });
+    });
+
+    gsap.utils.toArray('.sr-fade').forEach(el => {
+      if (el.closest('#hero')) return;
+      gsap.to(el, {
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        opacity: 1, duration: 0.85, ease: 'power2.out'
+      });
+    });
+
+    /* Project cards */
+    gsap.from('.project-card', {
+      scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
+      opacity: 0, y: 50, stagger: 0.13, duration: 0.85, ease: 'power3.out'
+    });
+
+    /* Service rows */
+    gsap.from('.svc-row', {
+      scrollTrigger: { trigger: '.services-list', start: 'top 82%', once: true },
+      opacity: 0, x: -28, stagger: 0.08, duration: 0.65, ease: 'power3.out'
+    });
+
+    /* Stat counters */
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = +el.dataset.count;
+      const obj = { val: 0 };
+      gsap.to(obj, {
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        val: target,
+        duration: 1.8,
+        ease: 'power2.out',
+        onUpdate() { el.textContent = Math.round(obj.val); }
+      });
+    });
+
+    /* Process steps */
+    gsap.utils.toArray('.step').forEach((el, i) => {
+      gsap.to(el, {
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        opacity: 1, y: 0, duration: 0.75, delay: i * 0.1, ease: 'power3.out'
+      });
+    });
+  </script>
+</body>
+</html>
